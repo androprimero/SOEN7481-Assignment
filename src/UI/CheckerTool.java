@@ -31,6 +31,7 @@ public class CheckerTool extends JFrame implements ActionListener {
 	private JButton btnCheck;
 	private JButton btnCancel;
 	private File fileToProcess;
+	private UIController control;
 	
 	public CheckerTool() throws HeadlessException {
 		this.setTitle("Checker Tool");
@@ -137,6 +138,9 @@ public class CheckerTool extends JFrame implements ActionListener {
 	 * Method StartCheckAction starts the process of checking
 	 */
 	private void StartCheckAction() {
-		
+		if(control == null) {
+			control = new UIController(fileToProcess);
+			System.out.println("Number of Java files: "+control.getNumberofCodes());
+		}
 	}
 }
