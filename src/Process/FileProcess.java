@@ -18,17 +18,14 @@ public class FileProcess {
 		stats = new Statistics();
 	}
 	/*
-	 * increment the empty catch statistic
+	 * 
 	 */
-	public void incrementEmptyCatch() {
-		stats.setCatch();
+	public Statistics getStatistics() {
+		return this.stats;
 	}
 	/*
-	 * Restart the empty catch statistic
+	 * Gets the compilation unit of the code
 	 */
-	public void resetEmptyCatch() {
-		stats.setCatch(0);
-	}
 	public CompilationUnit getUnit() {
 		return this.unitToCompile;
 	}

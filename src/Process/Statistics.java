@@ -2,23 +2,51 @@ package Process;
 
 public class Statistics {
 	private int emptyCatch;
+	private int numberCatch;
+	private int overCatchExeption;
 	public Statistics() {
 		emptyCatch = 0;
+		numberCatch = 0;
+		overCatchExeption = 0;
 	}
-	public int getEmptyCatch() {
-		return emptyCatch;
-	}
+	
+	
 	/*
-	 *  there is no setting in this method, its an increment
+	 * increase the number of catch clauses
 	 */
-	public void setCatch() {
+	public void incrementNumberCatch() {
+		this.numberCatch ++;
+	}
+	public void incrementOverCatchException() {
+		this.overCatchExeption++;
+	}
+	public void incrementEmptyCatch() {
 		this.emptyCatch++;
 	}
 	/*
-	 * the assignment of a new value to the empty catch
+	 * Set the number of Cacth clauses
 	 */
-	public void setCatch(int newEmptyCatch) {
+	public void setNumberCatch(int newNumberCatch) {
+		this.numberCatch = newNumberCatch;
+	}
+	public void setEmptyCatch(int newEmptyCatch) {
 		this.emptyCatch = newEmptyCatch;
+	}
+	public void setOverCatchException(int newOverCatchException) {
+		this.overCatchExeption = newOverCatchException;
+	}
+
+	/*
+	 * Get the number of catch clauses
+	 */
+	public int getNumberCatch() {
+		return this.numberCatch;
+	}
+	public int getEmptyCatch() {
+		return this.emptyCatch;
+	}
+	public int getOverCatchException() {
+		return this.overCatchExeption;
 	}
 
 }
