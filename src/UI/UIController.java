@@ -1,5 +1,7 @@
 package UI;
 import java.io.File;
+
+import Process.Logger;
 import Process.Project;
 /*
  * Class controller of the UI
@@ -7,16 +9,19 @@ import Process.Project;
 public class UIController {
 	private File directoryProcess;
 	private Project projectToProcess;
+	private Logger logger;
 	/*
 	 * Constructors
 	 */
-	public UIController(String path) {
+	public UIController(String path,Logger loger) {
 		directoryProcess = new File(path);
-		projectToProcess = new Project(directoryProcess);
+		projectToProcess = new Project(directoryProcess,loger);
+		logger = loger;
 	}
-	public UIController(File file) {
+	public UIController(File file,Logger loger) {
 		directoryProcess = file;
-		projectToProcess = new Project(directoryProcess);
+		projectToProcess = new Project(directoryProcess,loger);
+		logger = loger;
 	}
 	/*
 	 * gets the number of files of a project
@@ -36,5 +41,8 @@ public class UIController {
 	public void startAnalysis() {
 		projectToProcess.processFiles();
 	}
-
+	/*
+	 * Gets the status of every
+	 */
+	
 }

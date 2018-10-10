@@ -9,12 +9,14 @@ public class FileProcess {
 	private File code;
 	private Statistics stats;
 	private CompilationUnit unitToCompile;
+	private String name;
 	/*
 	 * Create a File to process with a give file, statistics start in 0
 	 */
 	public FileProcess(File code) throws FileNotFoundException {
 		this.code = code;
 		this.ParseCode();
+		name = code.getName();
 		stats = new Statistics();
 	}
 	/*
@@ -28,6 +30,12 @@ public class FileProcess {
 	 */
 	public CompilationUnit getUnit() {
 		return this.unitToCompile;
+	}
+	/*
+	 * gets the name of the file
+	 */
+	public String getNameFile() {
+		return this.name;
 	}
 	/*
 	 * Parse the file to generate the compilation unit

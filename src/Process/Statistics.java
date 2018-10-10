@@ -10,7 +10,6 @@ public class Statistics {
 		overCatchExeption = 0;
 	}
 	
-	
 	/*
 	 * increase the number of catch clauses
 	 */

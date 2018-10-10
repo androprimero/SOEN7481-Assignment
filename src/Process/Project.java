@@ -8,26 +8,31 @@ public class Project {
 	private List<Thread> analysers;
 	private int numberDirs;
 	private File directory;
+	private Logger logFile;
 	public static String extension = ".java";
 	private int filesToProcess = 10; // number of files to process per thread
 	private int maxThreadsActive = 10; // number max of active threads at a moment
 	/*
 	 * Constructors
 	 */
-	public Project(String path) {
+	public Project(String path,Logger log) {
 		directory = new File(path);
-		initializeComponents();
+		initializeComponents(log);
 		exploreProject(directory);
 	}
-	public Project(File directory) {
+	public Project(File directory,Logger log) {
 		this.directory = directory;
-		initializeComponents();
+		initializeComponents(log);
 		exploreProject(directory);
 	}
-	private void initializeComponents() {
+	/*
+	 *  Initialize all the components 
+	 */
+	private void initializeComponents(Logger log) {
 		analysers = new ArrayList<Thread>();
 		codes = new ArrayList<FileProcess>();
 		numberDirs = 0;
+		logFile = log;
 	}
 	/*
 	 * Public methods
@@ -83,9 +88,10 @@ public class Project {
 	public void processFiles() {
 		int act = 0;
 		int end = 0;
+		logFile.writeLog("Process starts\n");
 		while(act < codes.size()) {
 			if(activeProcess() < maxThreadsActive) {
-				CodeAnalyser analyser = new CodeAnalyser();
+				CodeAnalyser analyser = new CodeAnalyser(logFile);
 				if((act + filesToProcess) < codes.size()){
 					end = act + filesToProcess;
 				}else
@@ -99,6 +105,9 @@ public class Project {
 				act += filesToProcess;
 			}
 		}
+		while(activeProcess() > 0) {
+		}
+		logFile.writeLog("End Process\n");
 	}
 	/*
 	 * Private Methods
@@ -134,5 +143,4 @@ public class Project {
 		}
 		return active;
 	}
-
 }

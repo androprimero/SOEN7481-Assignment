@@ -8,15 +8,18 @@ import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.nio.file.Path;
+import java.io.IOException;
 import java.nio.file.Paths;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JTextField;
+import javax.swing.filechooser.FileNameExtensionFilter;
+
+import Process.Logger;
+
 import javax.swing.JButton;
-import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JTextArea;
 
@@ -33,10 +36,19 @@ public class CheckerTool extends JFrame implements ActionListener {
 	private JButton btnBrowse;
 	private JButton btnExplore;
 	private JButton btnCancel;
-	private File fileToProcess;
-	private UIController control;
 	private JTextArea areaResult;
 	private JButton btnCheck;
+	private JLabel lblLogFile;
+	private JTextField textLogPath;
+	private JButton btnBrowseLog;
+	
+	/*
+	 *  private variables not related to JFrame Controls
+	 */
+	private File fileToProcess;
+	private File logFile;
+	private UIController control;
+	private Logger logger;
 	
 	public CheckerTool() throws HeadlessException {
 		this.setTitle("Checker Tool");
@@ -56,7 +68,7 @@ public class CheckerTool extends JFrame implements ActionListener {
 		
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 53, 218, 87, 76, 0};
-		gridBagLayout.rowHeights = new int[]{23, 28, 141, 0, 0, 15, 0};
+		gridBagLayout.rowHeights = new int[]{23, 28, 87, 134, 0, 15, 0};
 		gridBagLayout.columnWeights = new double[]{0.0, 0.0, 1.0, 0.0, 1.0, Double.MIN_VALUE};
 		gridBagLayout.rowWeights = new double[]{0.0, 0.0, 1.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
 		getContentPane().setLayout(gridBagLayout);
@@ -86,12 +98,36 @@ public class CheckerTool extends JFrame implements ActionListener {
 		gbc_btnBrowse.gridy = 1;
 		getContentPane().add(btnBrowse, gbc_btnBrowse);
 		
+		lblLogFile = new JLabel("Log File:");
+		GridBagConstraints gbc_lblLogFile = new GridBagConstraints();
+		gbc_lblLogFile.anchor = GridBagConstraints.EAST;
+		gbc_lblLogFile.insets = new Insets(0, 0, 5, 5);
+		gbc_lblLogFile.gridx = 1;
+		gbc_lblLogFile.gridy = 2;
+		getContentPane().add(lblLogFile, gbc_lblLogFile);
+		
+		textLogPath = new JTextField();
+		GridBagConstraints gbc_textLogPath = new GridBagConstraints();
+		gbc_textLogPath.insets = new Insets(0, 0, 5, 5);
+		gbc_textLogPath.fill = GridBagConstraints.BOTH;
+		gbc_textLogPath.gridx = 2;
+		gbc_textLogPath.gridy = 2;
+		getContentPane().add(textLogPath, gbc_textLogPath);
+		textLogPath.setColumns(10);
+		
+		btnBrowseLog = new JButton("Browse Log File");
+		GridBagConstraints gbc_btnBrowseLog = new GridBagConstraints();
+		gbc_btnBrowseLog.insets = new Insets(0, 0, 5, 5);
+		gbc_btnBrowseLog.gridx = 3;
+		gbc_btnBrowseLog.gridy = 2;
+		getContentPane().add(btnBrowseLog, gbc_btnBrowseLog);
+		
 		areaResult = new JTextArea();
 		GridBagConstraints gbc_areaResult = new GridBagConstraints();
 		gbc_areaResult.insets = new Insets(0, 0, 5, 5);
 		gbc_areaResult.fill = GridBagConstraints.BOTH;
 		gbc_areaResult.gridx = 2;
-		gbc_areaResult.gridy = 2;
+		gbc_areaResult.gridy = 3;
 		getContentPane().add(areaResult, gbc_areaResult);
 		
 		btnExplore = new JButton("Explore");
@@ -123,8 +159,9 @@ public class CheckerTool extends JFrame implements ActionListener {
 		btnExplore.addActionListener(this);
 		btnBrowse.addActionListener(this);
 		btnCheck.addActionListener(this);
+		btnBrowseLog.addActionListener(this);
 	}
-	/*
+	/**
 	 * Public Methods
 	 */
 	// actions performed by buttons
@@ -140,15 +177,19 @@ public class CheckerTool extends JFrame implements ActionListener {
 				if(actionEvent.getSource().equals(btnExplore)) {
 					this.StartExploreAction();
 				}else {
-					this.StartCheckAction();
+					if(actionEvent.getSource().equals(btnBrowseLog)) {
+						this.browseLogPathAction();
+					}else {
+						this.StartCheckAction();
+					}
 				}
 			}
 		}
 	}
-	/*
+	/**
 	 * Private methods
 	 */
-	/*
+	/**
 	 * Method BrowseAction configures the selection of the project to check
 	 */
 	private void BrowseAction() {
@@ -159,19 +200,31 @@ public class CheckerTool extends JFrame implements ActionListener {
 			fileToProcess = fileChooser.getSelectedFile();
 		}
 	}
-	/*
+	/**
 	 * Method StartExploreAction starts the process of exploring the project
 	 */
 	private void StartExploreAction() {
 		if(showWarning()) {
 			if(control == null) {
-				control = new UIController(fileToProcess);
-				areaResult.append("Number of directories: "+control.getNumberOfDirectories()+"\n");
-				areaResult.append("Number of Java files: "+control.getNumberOfCodes()+"\n");
+				if(logger == null) {
+					try {
+						logger = new Logger(fileToProcess.getName()+"Log.txt");
+					}catch(IOException ex)
+					{
+						JOptionPane.showMessageDialog(this,"Log could not be created");
+					}
+				}
+				if(logger != null) {
+					control = new UIController(fileToProcess,logger);
+					areaResult.append("Number of directories: "+control.getNumberOfDirectories()+"\n");
+					areaResult.append("Number of Java files: "+control.getNumberOfCodes()+"\n");
+				}else {
+					JOptionPane.showMessageDialog(this, "Log File could not be created");
+				}
 			}
 		}
 	}
-	/*
+	/**
 	 * Method StartCheckAction starts the process of checking the code
 	 */
 	private void StartCheckAction() {
@@ -189,5 +242,31 @@ public class CheckerTool extends JFrame implements ActionListener {
 		}else {
 			return true;
 		}
+	}
+	private void browseLogPathAction() {
+		JFileChooser fileChooser = new JFileChooser( Paths.get(".").toAbsolutePath().toString());
+		fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		FileNameExtensionFilter filter = new FileNameExtensionFilter("Text", "txt");
+		fileChooser.setFileFilter(filter);
+		if(fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+			textLogPath.setText(fileChooser.getSelectedFile().getPath());
+			logFile = fileChooser.getSelectedFile();
+			try {
+				logger = new Logger(logFile);
+			}catch(IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+	}
+	@Override
+	public void dispose() {
+		if(logger != null) {
+			try {
+				logger.closeLog();
+			}catch(IOException ex) {
+				ex.printStackTrace();
+			}
+		}
+		super.dispose();
 	}
 }
