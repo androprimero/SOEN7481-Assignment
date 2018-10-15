@@ -23,7 +23,7 @@ public class Project {
 	public Project(File directory,Logger log) {
 		this.directory = directory;
 		initializeComponents(log);
-		exploreProject(directory);
+		exploreProject(this.directory);
 	}
 	/*
 	 *  Initialize all the components 
@@ -92,6 +92,7 @@ public class Project {
 		while(act < codes.size()) {
 			if(activeProcess() < maxThreadsActive) {
 				CodeAnalyser analyser = new CodeAnalyser(logFile);
+				analyser.setUpTypeSolver(this.directory);
 				if((act + filesToProcess) < codes.size()){
 					end = act + filesToProcess;
 				}else

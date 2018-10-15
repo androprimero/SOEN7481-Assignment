@@ -9,6 +9,9 @@ public class Main {
 		// JFrame that user uses to select the project to analyse
 		CheckerTool checker = new CheckerTool();
 		checker.setVisible(true);
+		int a = 1;
+		if(a == 1) {
+		}
 	}
 
 }

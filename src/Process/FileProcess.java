@@ -5,11 +5,15 @@ import java.io.FileNotFoundException;
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ast.*;
 
+/**
+ * FileProcess class: represents the code to be processed
+ */
 public class FileProcess {
 	private File code;
 	private Statistics stats;
 	private CompilationUnit unitToCompile;
 	private String name;
+
 	/*
 	 * Create a File to process with a give file, statistics start in 0
 	 */
@@ -17,7 +21,7 @@ public class FileProcess {
 		this.code = code;
 		this.ParseCode();
 		name = code.getName();
-		stats = new Statistics();
+		stats = new Statistics();		
 	}
 	/*
 	 * 

@@ -6,5 +6,15 @@
 	<classpathentry kind="lib" path="D:/alejandro/java projects/javaparser1-11/javaparser/javaparser-core-generators/target/javaparser-core-generators-3.6.23-SNAPSHOT-sources.jar"/>
 	<classpathentry kind="lib" path="D:/alejandro/java projects/javaparser1-11/javaparser/javaparser-core/target/javaparser-core-3.6.23-SNAPSHOT.jar"/>
 	<classpathentry kind="lib" path="D:/alejandro/java projects/javaparser1-11/javaparser/javaparser-core/target/javaparser-core-3.6.23-SNAPSHOT-sources.jar"/>
+	<classpathentry kind="lib" path="D:/alejandro/java projects/javaparser1-11/javaparser/javaparser-symbol-solver-core/target/javaparser-symbol-solver-core-3.6.23-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="D:/alejandro/java projects/javaparser1-11/javaparser/javaparser-symbol-solver-core/target/javaparser-symbol-solver-core-3.6.23-SNAPSHOT-sources.jar"/>
+	<classpathentry kind="lib" path="D:/alejandro/java projects/javaparser1-11/javaparser/javaparser-symbol-solver-logic/target/javaparser-symbol-solver-logic-3.6.23-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="D:/alejandro/java projects/javaparser1-11/javaparser/javaparser-symbol-solver-model/target/javaparser-symbol-solver-model-3.6.23-SNAPSHOT.jar"/>
+	<classpathentry kind="lib" path="D:/alejandro/java projects/google/animal-sniffer-annotations-1.14.jar"/>
+	<classpathentry kind="lib" path="D:/alejandro/java projects/google/guava-cache-19.0.0.jar"/>
+	<classpathentry kind="lib" path="D:/alejandro/java projects/google/guava-collect-19.0.0.jar"/>
+	<classpathentry kind="lib" path="D:/alejandro/java projects/google/guava-concurrent-19.0.0.jar"/>
+	<classpathentry kind="lib" path="D:/alejandro/java projects/google/guava-core-19.0.0.jar"/>
+	<classpathentry kind="lib" path="D:/alejandro/java projects/google/j2objc-annotations-0.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -3,6 +3,8 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+
+import com.github.javaparser.ast.Node;
 public class Logger {
 	private File logFile; 
 	private BufferedWriter buffer;
@@ -24,6 +26,15 @@ public class Logger {
 		}catch(IOException ex) {
 			System.out.println("Exeption generated writing "+ex.getMessage());
 			System.out.println("Message attempting to write "+ message);
+		}
+	}
+	public void writeWarning(String warningMessage,Node node) {
+		try {
+			this.buffer.append("Warning: "+ warningMessage+ node.getBegin().get().line + "\n"+node.toString());
+		}catch(IOException ex) {
+			System.out.println("Exeption generated writing "+ex.getMessage());
+			System.out.println("Message attempting to write "+ "Warning: "+ warningMessage+ node.getBegin().get().line + "\n"+
+								node.toString()+"\n");
 		}
 	}
 	public void closeLog() throws IOException {

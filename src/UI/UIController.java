@@ -9,19 +9,16 @@ import Process.Project;
 public class UIController {
 	private File directoryProcess;
 	private Project projectToProcess;
-	private Logger logger;
 	/*
 	 * Constructors
 	 */
 	public UIController(String path,Logger loger) {
 		directoryProcess = new File(path);
 		projectToProcess = new Project(directoryProcess,loger);
-		logger = loger;
 	}
 	public UIController(File file,Logger loger) {
 		directoryProcess = file;
 		projectToProcess = new Project(directoryProcess,loger);
-		logger = loger;
 	}
 	/*
 	 * gets the number of files of a project
