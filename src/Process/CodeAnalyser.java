@@ -213,7 +213,7 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 			if(right instanceof BinaryExpr) {
 				processCondition(right, ifStmt);
 			}
-			
+						
 		} else if(condition instanceof NameExpr) {
 			ResolvedType type = this.solveType(condition);
 			if(type != null) {
