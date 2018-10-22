@@ -30,7 +30,7 @@ public class Logger {
 	}
 	public void writeWarning(String warningMessage,Node node) {
 		try {
-			this.buffer.append("Warning: "+ warningMessage+" at line: "+ node.getBegin().get().line + "\n"+node.toString());
+			this.buffer.append("Warning: "+ warningMessage+" at line: "+ node.getBegin().get().line + "\n"+node.toString()+"\n");
 		}catch(IOException ex) {
 			System.out.println("Exeption generated writing "+ex.getMessage());
 			System.out.println("Message attempting to write "+ "Warning: "+ warningMessage+ node.getBegin().get().line + "\n"+

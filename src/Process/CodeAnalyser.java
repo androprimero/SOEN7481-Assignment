@@ -33,7 +33,7 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	private boolean equalsMethod,hashCodeMethod;
 	private CombinedTypeSolver typeSolver;
 	private JavaParserFacade facade;
-	private List<String> varUsed;
+	private List<String> varUsed; // variables used (something assign to them) in the method
 	public CodeAnalyser(Logger loger) {
 		codes = new ArrayList<FileProcess>();
 		varUsed = new ArrayList<String>();
@@ -59,7 +59,11 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	}
 	@Override
 	public void visit(MethodDeclaration methodDecl, Void arg) {
-		log.writeLog("\tMethod checked: " + methodDecl.getNameAsString()+"\n");
+		/*
+		 * Searchs inside the method code for different bugs
+		 */
+		varUsed.clear();// clear the variables when the method changes
+		log.writeLog("\tMethod checked: " + methodDecl.getNameAsString()+"\n"); // writes the log to keep track of methods analyzed
 		if(methodDecl.getNameAsString().equals("equals")) {
 			this.equalsMethod = true;
 		}
@@ -91,7 +95,7 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	}
 	public void checkFlags() {
 		if(this.equalsMethod && !this.hashCodeMethod) {
-			this.log.writeLog(codeInProcess.getNameFile() + " Overrides equals but no hashCode");
+			this.log.writeLog( "Warning: Overrides equals but no hashCode \n"+codeInProcess.getNameFile()+"\n");
 		}
 	}
 	/*
@@ -123,16 +127,13 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 			IfStmt ifstm = (IfStmt) node;
 			processIfStmt(ifstm);
 		}else if(node.getClass().equals(ExpressionStmt.class)){
+			// other expressions as assignments are taken in account here (there are no bugs related directly, but some information is taken)
 			ExpressionStmt stmt = (ExpressionStmt) node;
 			//System.out.println(stmt.getExpression().toString());
 			Expression expr = stmt.getExpression();
 			if((expr instanceof AssignExpr)) {
+				// takes the assignment of variables and add the name to the list
 				this.varUsed.add(((AssignExpr) expr).getTarget().toString());
-			}
-			ResolvedType type = this.solveType(expr);
-			if(type != null) {
-				System.out.println("Expression code "+ expr.toString());
-				System.out.println("Expression type "+type.describe());
 			}
 		}else {	
 			log.writeLog(node.getClass() + " code : "+ node.toString()+"\n");
@@ -189,13 +190,6 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 			return null;
 		}
 	}
-	/*private void stringChecker(String className,Node codeNode) {
-		if(className.equals("String")) {
-			System.out.println(codeNode.toString());
-		}else {
-			System.out.println(codeNode.toString() + "is not a string");
-		}
-	}*/
 	private void processIfStmt(IfStmt ifStmt) {
 		Expression condition = ifStmt.getCondition();
 		List<Node> statements = ifStmt.getChildNodes();
