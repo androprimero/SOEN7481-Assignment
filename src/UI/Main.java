@@ -10,7 +10,13 @@ public class Main {
 		CheckerTool checker = new CheckerTool();
 		checker.setVisible(true);
 		int a = 1;
+		boolean b = true;
 		if(a == 1) {
+		}
+		if("a"=="b") {
+		}
+		if(b) {
+			
 		}
 	}
 

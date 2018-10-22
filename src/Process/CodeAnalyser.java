@@ -33,8 +33,10 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	private boolean equalsMethod,hashCodeMethod;
 	private CombinedTypeSolver typeSolver;
 	private JavaParserFacade facade;
+	private List<String> varUsed;
 	public CodeAnalyser(Logger loger) {
 		codes = new ArrayList<FileProcess>();
+		varUsed = new ArrayList<String>();
 		log = loger;
 	}
 	public void addCodeToProcess(FileProcess file) {
@@ -124,6 +126,9 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 			ExpressionStmt stmt = (ExpressionStmt) node;
 			//System.out.println(stmt.getExpression().toString());
 			Expression expr = stmt.getExpression();
+			if((expr instanceof AssignExpr)) {
+				this.varUsed.add(((AssignExpr) expr).getTarget().toString());
+			}
 			ResolvedType type = this.solveType(expr);
 			if(type != null) {
 				System.out.println("Expression code "+ expr.toString());
@@ -208,31 +213,36 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 			Expression left = expr.getLeft();
 			if(left instanceof BinaryExpr) {
 				processCondition(left, ifStmt);
+			}else {
+				typeProcess(left,oper,ifStmt);
 			}
 			Expression right = expr.getRight();
 			if(right instanceof BinaryExpr) {
 				processCondition(right, ifStmt);
+			}else {
+				typeProcess(right,oper,ifStmt);
 			}
-						
 		} else if(condition instanceof NameExpr) {
-			ResolvedType type = this.solveType(condition);
-			if(type != null) {
-				System.out.println("condition code "+ condition.toString());
-				System.out.println("condition type "+type.describe());
+			if(!varUsed.contains(condition.toString())) {
+				log.writeWarning("Condition has no effect ", ifStmt);
 			}
 			//System.out.println("Name Expression to locate");
 		}
 	}
-	private void typeProcess(Expression expr, BinaryExpr.Operator oper) {
+	private void typeProcess(Expression expr, BinaryExpr.Operator oper,Statement parentExpression) {
 		ResolvedType type = this.solveType(expr);
 		if(type != null) {
-			if(type.describe().equals("String")) {
+			if(type.describe().equals("java.lang.String")) {
 				if(oper.equals(BinaryExpr.Operator.EQUALS)) {
-					
+					log.writeWarning("Comparison of String objects using == ", parentExpression);
+				}else {
+					if(oper.equals(BinaryExpr.Operator.NOT_EQUALS)) {
+						log.writeWarning("Comparison of String objects using != ", parentExpression);
+					}
 				}
 			}
-			System.out.println("condition code "+ expr.toString());
-			System.out.println("condition type "+type.describe());
+			//System.out.println("condition code "+ expr.toString());
+			//System.out.println("condition type "+type.describe());
 		}
 	}
 }
