@@ -2,31 +2,31 @@ package Process;
 
 import com.github.javaparser.ast.visitor.*;
 import com.github.javaparser.resolution.UnsolvedSymbolException;
-import com.github.javaparser.resolution.types.ResolvedPrimitiveType;
 import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.javaparsermodel.JavaParserFacade;
-import com.github.javaparser.symbolsolver.model.typesystem.ReferenceTypeImpl;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+
+
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.MethodDeclaration;
-import com.github.javaparser.ast.expr.AssignExpr;
-import com.github.javaparser.ast.expr.BinaryExpr;
-import com.github.javaparser.ast.expr.BooleanLiteralExpr;
-import com.github.javaparser.ast.expr.Expression;
-import com.github.javaparser.ast.expr.NameExpr;
+import com.github.javaparser.ast.body.Parameter;
+import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.*;
 import com.github.javaparser.ast.stmt.*;
+import com.github.javaparser.ast.type.Type;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
 
-import sun.invoke.util.BytecodeName;
 
 public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
+	private static final int MAX_PUBLIC_METHODS = 1000;
 	private List<FileProcess> codes;
 	private FileProcess codeInProcess;
 	private Logger log;
@@ -34,9 +34,19 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	private CombinedTypeSolver typeSolver;
 	private JavaParserFacade facade;
 	private List<String> varUsed; // variables used (something assign to them) in the method
+	private List<CodeElement> privateMethods;
+	private List<String> methodsCall;
+	private List<CodeElement> publicMethods;
+	private List<CodeElement> CallMethods;
+	private List<VariableDeclarator> varDeclared; // Variables Declared in the method
+	private List<Parameter> parameters;
 	public CodeAnalyser(Logger loger) {
 		codes = new ArrayList<FileProcess>();
 		varUsed = new ArrayList<String>();
+		privateMethods = new ArrayList<CodeElement>();
+		methodsCall = new ArrayList<>();
+		varDeclared = new ArrayList<>();
+		parameters = new ArrayList<>();
 		log = loger;
 	}
 	public void addCodeToProcess(FileProcess file) {
@@ -60,21 +70,29 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	@Override
 	public void visit(MethodDeclaration methodDecl, Void arg) {
 		/*
-		 * Searchs inside the method code for different bugs
+		 * Search inside the method code for different bugs
 		 */
 		varUsed.clear();// clear the variables when the method changes
 		log.writeLog("\tMethod checked: " + methodDecl.getNameAsString()+"\n"); // writes the log to keep track of methods analyzed
-		if(methodDecl.getNameAsString().equals("equals")) {
-			this.equalsMethod = true;
-		}
-		if(methodDecl.getNameAsString().equals("hashCode")) {
-			this.hashCodeMethod = true;
-		}
+		this.processMethodDeclaration(methodDecl);
 		NodeList<Statement> statements = methodDecl.getBody().get().getStatements();
 		for(Statement stmt: statements) {
 			this.processTypeExpr(stmt);
 		}
+		for(String name:this.methodsCall) {
+			int pos = this.isMethodAlreadyListed(name);
+			if(pos > -1) {
+				privateMethods.get(pos).setUsed(true);
+			}
+		}
+		for(CodeElement method:privateMethods) {
+			if(!method.getUsed()) {
+				this.codeInProcess.getStatistics().incrementMethodNotUsed();
+				log.writeWarning("Method is not used ", method);
+			}
+		}
 	}
+	
 	@Override
 	public void run() {
 		for(FileProcess code:codes) {
@@ -83,6 +101,8 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 			this.codeInProcess = code; 
 			this.visit(code.getUnit(),null);
 			this.checkFlags();
+			this.checkUsedMethod();
+			log.writeLog(code.getStatistics().toString());
 		}
 		
 	}
@@ -92,6 +112,7 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	public void cleanFlags() {
 		this.equalsMethod = false;
 		this.hashCodeMethod = false;
+		this.privateMethods.clear();
 	}
 	public void checkFlags() {
 		if(this.equalsMethod && !this.hashCodeMethod) {
@@ -134,8 +155,15 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 			if((expr instanceof AssignExpr)) {
 				// takes the assignment of variables and add the name to the list
 				this.varUsed.add(((AssignExpr) expr).getTarget().toString());
+			}else if(expr instanceof MethodCallExpr) {
+				// Checks the use of a method
+				//System.out.println("Method name "+((MethodCallExpr)expr).getNameAsString()+"\n");
+				methodsCall.add(((MethodCallExpr)expr).getNameAsString());
+				CallMethods.add(new CodeElement(((MethodCallExpr)expr).getNameAsString()));
 			}
-		}else {	
+		}else if(node instanceof FieldDeclaration){
+			varDeclared.addAll(((FieldDeclaration) node).getVariables());
+		}else{	
 			log.writeLog(node.getClass() + " code : "+ node.toString()+"\n");
 		}
 	}
@@ -200,7 +228,8 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	}
 	private void processCondition(Expression condition, IfStmt ifStmt) {
 		if(condition instanceof BooleanLiteralExpr) {
-			log.writeWarning("Condition has No effect", ifStmt);
+			this.codeInProcess.getStatistics().incrementConditionHasNoEffect();
+			log.writeWarning("Condition has No effect ", ifStmt);
 		} else if(condition instanceof BinaryExpr){
 			BinaryExpr expr = (BinaryExpr) condition;
 			BinaryExpr.Operator oper = expr.getOperator();
@@ -218,6 +247,7 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 			}
 		} else if(condition instanceof NameExpr) {
 			if(!varUsed.contains(condition.toString())) {
+				this.codeInProcess.getStatistics().incrementConditionHasNoEffect();
 				log.writeWarning("Condition has no effect ", ifStmt);
 			}
 			//System.out.println("Name Expression to locate");
@@ -228,15 +258,83 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 		if(type != null) {
 			if(type.describe().equals("java.lang.String")) {
 				if(oper.equals(BinaryExpr.Operator.EQUALS)) {
+					this.codeInProcess.getStatistics().incrementStringComparison();
 					log.writeWarning("Comparison of String objects using == ", parentExpression);
 				}else {
 					if(oper.equals(BinaryExpr.Operator.NOT_EQUALS)) {
+						this.codeInProcess.getStatistics().incrementStringComparison();
 						log.writeWarning("Comparison of String objects using != ", parentExpression);
 					}
 				}
 			}
 			//System.out.println("condition code "+ expr.toString());
 			//System.out.println("condition type "+type.describe());
+		}
+	}
+	/**
+	 * Process the method declarations
+	 * @param methodDecl
+	 */
+	private void processMethodDeclaration(MethodDeclaration methodDecl) {
+		EnumSet<com.github.javaparser.ast.Modifier> modifiers = methodDecl.getModifiers();
+		parameters = methodDecl.getParameters();
+		boolean isPrivate;
+		if(modifiers.iterator().hasNext()) {
+			isPrivate = modifiers.iterator().next().equals(com.github.javaparser.ast.Modifier.PRIVATE);
+		}else {
+			isPrivate = false;
+			this.writePublicMethod(new CodeElement(methodDecl.getNameAsString()));
+		}
+		if(methodDecl.getNameAsString().equals("equals")) {
+			this.equalsMethod = true;
+		}
+		if(methodDecl.getNameAsString().equals("hashCode")) {
+			this.hashCodeMethod = true;
+		}
+		if(privateMethods.size() == 0) {
+			if(isPrivate) {
+				privateMethods.add(new CodeElement(methodDecl.getNameAsString(),codeInProcess.getNameFile())); // first method to process
+			}
+		}else {
+			if(isPrivate) {
+				String name = methodDecl.getName().asString();
+				if(this.isMethodAlreadyListed(name) < 0) {
+					privateMethods.add(new CodeElement(methodDecl.getName().asString(),codeInProcess.getNameFile())); // first method to process
+				}
+			}
+		}
+	}
+	private int isMethodAlreadyListed(String methodName) {
+		for(CodeElement element:privateMethods) {
+			if(element.getName().equals(methodName)) {
+				return privateMethods.indexOf(element);
+			}
+		}
+		return -1;
+	}
+	private void writePublicMethod(CodeElement publicMethod) {
+		try {
+		synchronized(publicMethods) {
+			while(publicMethods.size() > MAX_PUBLIC_METHODS) {
+				wait();
+			}
+			publicMethods.add(publicMethod);
+			notifyAll();
+		}
+		}catch(InterruptedException ex) {
+			ex.printStackTrace();
+		}
+	}
+	private void checkUsedMethod() {
+			synchronized(publicMethods) {
+			for(CodeElement element:publicMethods) {
+				for(CodeElement calledElement:CallMethods) {
+					if(element.equals(calledElement)) {
+						publicMethods.remove(element);
+						notifyAll();
+					}
+				}
+			}
 		}
 	}
 }

@@ -19,5 +19,8 @@ public class Main {
 			
 		}
 	}
+	private void unUsedMethod() {
+		System.out.println();
+	}
 
 }

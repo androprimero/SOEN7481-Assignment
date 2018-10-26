@@ -37,6 +37,14 @@ public class Logger {
 								node.toString()+"\n");
 		}
 	}
+	public void writeWarning(String warningMessage,CodeElement element) {
+		try {
+			this.buffer.append("Warning: "+ warningMessage+" "+element.getName()+"\n");
+		}catch(IOException ex) {
+			System.out.println("Exeption generated writing "+ex.getMessage());
+			System.out.println("Message attempting to write "+ "Warning: "+ warningMessage+ " "+element.getName() + "\n");
+		}
+	}
 	public void closeLog() throws IOException {
 		this.buffer.close();
 	}
