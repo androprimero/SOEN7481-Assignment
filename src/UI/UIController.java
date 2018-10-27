@@ -1,7 +1,7 @@
 package UI;
 import java.io.File;
+import java.io.IOException;
 
-import Process.Logger;
 import Process.Project;
 /*
  * Class controller of the UI
@@ -12,13 +12,13 @@ public class UIController {
 	/*
 	 * Constructors
 	 */
-	public UIController(String path,Logger loger) {
+	public UIController(String path,String logPath) throws IOException {
 		directoryProcess = new File(path);
-		projectToProcess = new Project(directoryProcess,loger);
+		projectToProcess = new Project(directoryProcess,logPath);
 	}
-	public UIController(File file,Logger loger) {
+	public UIController(File file,String logPath) throws IOException {
 		directoryProcess = file;
-		projectToProcess = new Project(directoryProcess,loger);
+		projectToProcess = new Project(directoryProcess,logPath);
 	}
 	/*
 	 * gets the number of files of a project

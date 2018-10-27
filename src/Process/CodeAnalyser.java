@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
 
-
+import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.NodeList;
 import com.github.javaparser.ast.body.FieldDeclaration;
@@ -35,18 +35,20 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	private JavaParserFacade facade;
 	private List<String> varUsed; // variables used (something assign to them) in the method
 	private List<CodeElement> privateMethods;
-	private List<String> methodsCall;
 	private List<CodeElement> publicMethods;
 	private List<CodeElement> CallMethods;
 	private List<VariableDeclarator> varDeclared; // Variables Declared in the method
 	private List<Parameter> parameters;
-	public CodeAnalyser(Logger loger) {
+	private List<VariableDeclarator> classVariables; // have the variables of the class
+	public CodeAnalyser(Logger loger,List<CodeElement> publicMethodsList) {
 		codes = new ArrayList<FileProcess>();
 		varUsed = new ArrayList<String>();
 		privateMethods = new ArrayList<CodeElement>();
-		methodsCall = new ArrayList<>();
 		varDeclared = new ArrayList<>();
 		parameters = new ArrayList<>();
+		publicMethods = publicMethodsList;
+		classVariables = new ArrayList<>();
+		CallMethods = new ArrayList<>();
 		log = loger;
 	}
 	public void addCodeToProcess(FileProcess file) {
@@ -68,19 +70,25 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 		this.codes = codes;
 	}
 	@Override
+	public void visit(VariableDeclarator n, Void arg) {
+		classVariables.add(n);
+	}
+	@Override
 	public void visit(MethodDeclaration methodDecl, Void arg) {
 		/*
 		 * Search inside the method code for different bugs
 		 */
 		varUsed.clear();// clear the variables when the method changes
+		CallMethods.clear();// clear the methods called inside the method
+		parameters.clear(); // clear the parameters
 		log.writeLog("\tMethod checked: " + methodDecl.getNameAsString()+"\n"); // writes the log to keep track of methods analyzed
 		this.processMethodDeclaration(methodDecl);
 		NodeList<Statement> statements = methodDecl.getBody().get().getStatements();
 		for(Statement stmt: statements) {
 			this.processTypeExpr(stmt);
 		}
-		for(String name:this.methodsCall) {
-			int pos = this.isMethodAlreadyListed(name);
+		for(CodeElement element:CallMethods) {
+			int pos = this.isMethodAlreadyListed(element.getName());
 			if(pos > -1) {
 				privateMethods.get(pos).setUsed(true);
 			}
@@ -112,6 +120,8 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	public void cleanFlags() {
 		this.equalsMethod = false;
 		this.hashCodeMethod = false;
+		this.privateMethods.clear();
+		this.classVariables.clear();
 		this.privateMethods.clear();
 	}
 	public void checkFlags() {
@@ -157,9 +167,40 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 				this.varUsed.add(((AssignExpr) expr).getTarget().toString());
 			}else if(expr instanceof MethodCallExpr) {
 				// Checks the use of a method
-				//System.out.println("Method name "+((MethodCallExpr)expr).getNameAsString()+"\n");
-				methodsCall.add(((MethodCallExpr)expr).getNameAsString());
-				CallMethods.add(new CodeElement(((MethodCallExpr)expr).getNameAsString()));
+				String method = ((MethodCallExpr)expr).toString();
+				// check the variable name to find the type
+				boolean isClass = false,isLocal = false;
+				String varName = new String();
+				if(method.contains(".")) {// get the name of the variable to find the class
+					varName = method.substring(0, method.indexOf("."));
+				}else {
+					isClass= true; // method call without a variable name means that is from the class
+				}
+				String type = codeInProcess.getNameFile().substring(0,codeInProcess.getNameFile().indexOf("."));
+				if(!isClass) {
+					for(VariableDeclarator variable: classVariables) {
+						if(variable.getNameAsString().equals(varName)) {
+							isClass = true;
+							type = variable.getTypeAsString();
+						}
+					}
+				}
+				if(!isClass) {
+					for(VariableDeclarator variable:varDeclared) {
+						if(variable.getNameAsString().equals(varName)) {
+							isLocal = true;
+							type = variable.getTypeAsString();
+						}
+					}
+				}
+				if(!isClass && !isLocal) {
+					for(Parameter parameter:parameters) {
+						if(parameter.getNameAsString().equals(varName)) {
+							type = parameter.getTypeAsString();
+						}
+					}
+				}
+				CallMethods.add(new CodeElement(((MethodCallExpr)expr).getNameAsString(),type));
 			}
 		}else if(node instanceof FieldDeclaration){
 			varDeclared.addAll(((FieldDeclaration) node).getVariables());
@@ -277,13 +318,19 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	 */
 	private void processMethodDeclaration(MethodDeclaration methodDecl) {
 		EnumSet<com.github.javaparser.ast.Modifier> modifiers = methodDecl.getModifiers();
+		Modifier modifierMethod = Modifier.DEFAULT;
+		if(modifiers.iterator().hasNext()) {
+			modifierMethod = modifiers.iterator().next();
+		}
 		parameters = methodDecl.getParameters();
 		boolean isPrivate;
-		if(modifiers.iterator().hasNext()) {
-			isPrivate = modifiers.iterator().next().equals(com.github.javaparser.ast.Modifier.PRIVATE);
+		if(modifierMethod.equals(com.github.javaparser.ast.Modifier.PRIVATE)) {
+			isPrivate = true;
 		}else {
 			isPrivate = false;
-			this.writePublicMethod(new CodeElement(methodDecl.getNameAsString()));
+			if(modifierMethod.equals(Modifier.PUBLIC)) {
+				this.writePublicMethod(new CodeElement(methodDecl.getNameAsString(),codeInProcess.getNameFile().substring(0,codeInProcess.getNameFile().indexOf("."))));
+			}
 		}
 		if(methodDecl.getNameAsString().equals("equals")) {
 			this.equalsMethod = true;
@@ -316,10 +363,10 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 		try {
 		synchronized(publicMethods) {
 			while(publicMethods.size() > MAX_PUBLIC_METHODS) {
-				wait();
+				publicMethods.wait();
 			}
 			publicMethods.add(publicMethod);
-			notifyAll();
+			publicMethods.notifyAll();
 		}
 		}catch(InterruptedException ex) {
 			ex.printStackTrace();
@@ -331,7 +378,7 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 				for(CodeElement calledElement:CallMethods) {
 					if(element.equals(calledElement)) {
 						publicMethods.remove(element);
-						notifyAll();
+						publicMethods.notifyAll();
 					}
 				}
 			}

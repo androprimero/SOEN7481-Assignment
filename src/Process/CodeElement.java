@@ -24,4 +24,11 @@ public class CodeElement {
 	public String getName() {
 		return this.name;
 	}
+	public String getOwner() {
+		return this.owner;
+	}
+	public String toString() {
+		String string = "Code Name "+ this.getName() + " Owner: "+this.getOwner();
+		return string;
+	}
 }

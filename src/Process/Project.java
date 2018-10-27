@@ -2,6 +2,7 @@ package Process;
 import java.util.*;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public class Project {
 	private List <FileProcess> codes;
@@ -9,18 +10,19 @@ public class Project {
 	private int numberDirs;
 	private File directory;
 	private Logger logFile;
+	private List<CodeElement> publicMethodProject;
 	public static String extension = ".java";
 	private int filesToProcess = 10; // number of files to process per thread
 	private int maxThreadsActive = 10; // number max of active threads at a moment
 	/*
 	 * Constructors
 	 */
-	public Project(String path,Logger log) {
+	public Project(String path,String log) throws IOException {
 		directory = new File(path);
 		initializeComponents(log);
 		exploreProject(directory);
 	}
-	public Project(File directory,Logger log) {
+	public Project(File directory,String log) throws IOException {
 		this.directory = directory;
 		initializeComponents(log);
 		exploreProject(this.directory);
@@ -28,11 +30,12 @@ public class Project {
 	/*
 	 *  Initialize all the components 
 	 */
-	private void initializeComponents(Logger log) {
+	private void initializeComponents(String log) throws IOException {
 		analysers = new ArrayList<Thread>();
 		codes = new ArrayList<FileProcess>();
+		publicMethodProject = new ArrayList<CodeElement>();
 		numberDirs = 0;
-		logFile = log;
+		logFile = new Logger(log);
 	}
 	/*
 	 * Public methods
@@ -88,10 +91,15 @@ public class Project {
 	public void processFiles() {
 		int act = 0;
 		int end = 0;
+		try {
+			logFile.openLog();
+		}catch(IOException ex) {
+			ex.printStackTrace();
+		}
 		logFile.writeLog("Process starts\n");
 		while(act < codes.size()) {
 			if(activeProcess() < maxThreadsActive) {
-				CodeAnalyser analyser = new CodeAnalyser(logFile);
+				CodeAnalyser analyser = new CodeAnalyser(logFile,publicMethodProject);
 				analyser.setUpTypeSolver(this.directory);
 				if((act + filesToProcess) < codes.size()){
 					end = act + filesToProcess;
@@ -108,7 +116,19 @@ public class Project {
 		}
 		while(activeProcess() > 0) {
 		}
+		logFile.writeLog("-----------------------------\n");
+		logFile.writeLog("Methods Unused In the project\n");
+		for(CodeElement element:publicMethodProject) {
+			logFile.writeLog(element.toString()+"\n");
+		}
+		logFile.writeLog("-----------------------------\n");
 		logFile.writeLog("End Process\n");
+		try {
+			logFile.closeLog();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	/*
 	 * Private Methods

@@ -48,7 +48,7 @@ public class CheckerTool extends JFrame implements ActionListener {
 	private File fileToProcess;
 	private File logFile;
 	private UIController control;
-	private Logger logger;
+	private String logger;
 	
 	public CheckerTool() throws HeadlessException {
 		this.setTitle("Checker Tool");
@@ -207,19 +207,14 @@ public class CheckerTool extends JFrame implements ActionListener {
 		if(showWarning()) {
 			if(control == null) {
 				if(logger == null) {
-					try {
-						logger = new Logger(fileToProcess.getName()+"Log.txt");
-					}catch(IOException ex)
-					{
-						JOptionPane.showMessageDialog(this,"Log could not be created");
-					}
+					logger = fileToProcess.getName()+"Log.txt";
 				}
-				if(logger != null) {
+				try {
 					control = new UIController(fileToProcess,logger);
 					areaResult.append("Number of directories: "+control.getNumberOfDirectories()+"\n");
 					areaResult.append("Number of Java files: "+control.getNumberOfCodes()+"\n");
-				}else {
-					JOptionPane.showMessageDialog(this, "Log File could not be created");
+				}catch(IOException ex){
+					JOptionPane.showMessageDialog(this,"Log could not be created");
 				}
 			}
 		}
@@ -251,22 +246,11 @@ public class CheckerTool extends JFrame implements ActionListener {
 		if(fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
 			textLogPath.setText(fileChooser.getSelectedFile().getPath());
 			logFile = fileChooser.getSelectedFile();
-			try {
-				logger = new Logger(logFile);
-			}catch(IOException ex) {
-				ex.printStackTrace();
-			}
+			logger = logFile.getPath();
 		}
 	}
 	@Override
 	public void dispose() {
-		if(logger != null) {
-			try {
-				logger.closeLog();
-			}catch(IOException ex) {
-				ex.printStackTrace();
-			}
-		}
 		super.dispose();
 	}
 }

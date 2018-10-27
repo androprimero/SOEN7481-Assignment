@@ -20,6 +20,9 @@ public class Logger {
 	private void startBuffers(String name) throws IOException {
 		this.buffer = new BufferedWriter(new FileWriter(name));
 	}
+	public void openLog() throws IOException {
+		this.buffer = new BufferedWriter(new FileWriter(this.logFile.getName()));
+	}
 	public void writeLog(String message){
 		try {
 			this.buffer.append(message);
