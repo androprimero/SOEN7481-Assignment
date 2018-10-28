@@ -48,7 +48,7 @@ public class Project {
 			FileProcess fileToAdd = new FileProcess(file);
 			codes.add(fileToAdd);
 		}catch(FileNotFoundException ex) {
-			System.out.println("File not found in the project: "+file.getPath());
+			System.out.println("The file is not found in the specified directory: "+file.getPath());
 		}
 	}
 	/*
@@ -96,7 +96,7 @@ public class Project {
 		}catch(IOException ex) {
 			ex.printStackTrace();
 		}
-		logFile.writeLog("Process starts\n");
+		logFile.writeLog("Initiating Parser\n");
 		while(act < codes.size()) {
 			if(activeProcess() < maxThreadsActive) {
 				CodeAnalyser analyser = new CodeAnalyser(logFile,publicMethodProject);
@@ -116,13 +116,13 @@ public class Project {
 		}
 		while(activeProcess() > 0) {
 		}
-		logFile.writeLog("-----------------------------\n");
-		logFile.writeLog("Methods Unused In the project\n");
+		logFile.writeLog("============================\n");
+		logFile.writeLog("Unused methods in the project\n");
 		for(CodeElement element:publicMethodProject) {
 			logFile.writeLog(element.toString()+"\n");
 		}
 		logFile.writeLog("-----------------------------\n");
-		logFile.writeLog("End Process\n");
+		logFile.writeLog("Process Finished\n");
 		try {
 			logFile.closeLog();
 		} catch (IOException e) {

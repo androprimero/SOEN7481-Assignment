@@ -9,12 +9,12 @@ public class Statistics {
 	private int stringComparision;
 
 	public Statistics() {
-		emptyCatch = 0;
-		numberCatch = 0;
-		overCatchExeption = 0;
-		methodNotUsed = 0;
-		conditionHasNoEffect = 0;
-		stringComparision = 0;
+		emptyCatch 				= 0;
+		numberCatch 			= 0;
+		overCatchExeption 		= 0;
+		methodNotUsed 			= 0;
+		conditionHasNoEffect 	= 0;
+		stringComparision 		= 0;
 	}
 	
 	/*

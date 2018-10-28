@@ -27,15 +27,15 @@ public class Logger {
 		try {
 			this.buffer.append(message);
 		}catch(IOException ex) {
-			System.out.println("Exeption generated writing "+ex.getMessage());
-			System.out.println("Message attempting to write "+ message);
+			System.out.println("Exception generated writing: "+ex.getMessage());
+			System.out.println("Message attempting to write: "+ message);
 		}
 	}
 	public void writeWarning(String warningMessage,Node node) {
 		try {
 			this.buffer.append("Warning: "+ warningMessage+" at line: "+ node.getBegin().get().line + "\n"+node.toString()+"\n");
 		}catch(IOException ex) {
-			System.out.println("Exeption generated writing "+ex.getMessage());
+			System.out.println("Exeption generated writing: "+ex.getMessage());
 			System.out.println("Message attempting to write "+ "Warning: "+ warningMessage+ node.getBegin().get().line + "\n"+
 								node.toString()+"\n");
 		}
@@ -44,7 +44,7 @@ public class Logger {
 		try {
 			this.buffer.append("Warning: "+ warningMessage+" "+element.getName()+"\n");
 		}catch(IOException ex) {
-			System.out.println("Exeption generated writing "+ex.getMessage());
+			System.out.println("Exeption generated writing: "+ex.getMessage());
 			System.out.println("Message attempting to write "+ "Warning: "+ warningMessage+ " "+element.getName() + "\n");
 		}
 	}
