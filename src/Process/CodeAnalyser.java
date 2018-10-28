@@ -41,15 +41,15 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	private List<Parameter> parameters;
 	private List<VariableDeclarator> classVariables; // have the variables of the class
 	public CodeAnalyser(Logger loger,List<CodeElement> publicMethodsList) {
-		codes = new ArrayList<FileProcess>();
-		varUsed = new ArrayList<String>();
-		privateMethods = new ArrayList<CodeElement>();
-		varDeclared = new ArrayList<>();
-		parameters = new ArrayList<>();
-		publicMethods = publicMethodsList;
-		classVariables = new ArrayList<>();
-		CallMethods = new ArrayList<>();
-		log = loger;
+		codes 			= new ArrayList<FileProcess>();
+		varUsed 		= new ArrayList<String>();
+		privateMethods 	= new ArrayList<CodeElement>();
+		varDeclared 	= new ArrayList<>();
+		parameters 		= new ArrayList<>();
+		publicMethods 	= publicMethodsList;
+		classVariables 	= new ArrayList<>();
+		CallMethods 	= new ArrayList<>();
+		log 			= loger;
 	}
 	public void addCodeToProcess(FileProcess file) {
 		codes.add(file);
