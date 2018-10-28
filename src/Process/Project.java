@@ -11,9 +11,9 @@ public class Project {
 	private File directory;
 	private Logger logFile;
 	private List<CodeElement> publicMethodProject;
-	public static String extension = ".java";
-	private int filesToProcess = 10; // number of files to process per thread
-	private int maxThreadsActive = 10; // number max of active threads at a moment
+	public static String extension 		= ".java";
+	private int filesToProcess 			= 10; // number of files to process per thread
+	private int maxThreadsActive 		= 10; // number max of active threads at a moment
 	/*
 	 * Constructors
 	 */
