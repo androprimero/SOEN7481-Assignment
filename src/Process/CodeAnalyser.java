@@ -57,6 +57,32 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 	public void setListCodes(List<FileProcess> codes) {
 		this.codes = codes;
 	}
+	
+	// Chandrakanth
+	
+	public boolean processTry(TryStmt node) {
+		ArrayList<String> printStatements = new ArrayList<String>();
+		NodeList<CatchClause> catchClauses = node.getCatchClauses();
+		for(CatchClause catchClause: catchClauses) {
+			CatchClause tmpCatch = catchClause;
+			BlockStmt block = tmpCatch.getBody();
+			NodeList<Statement> statements = block.getStatements();
+			for(Statement statement: statements) {
+				for(String s: printStatements) {
+					if(s.equals(statement.toString())) {
+						System.out.println("Inadequate logging information in catch blocks found: ");
+						System.out.println("Multiple catch blocks with statement: " + s);
+						return false;
+					}
+				}
+				printStatements.add(statement.toString());
+			}
+		}
+		return true;
+	}
+	
+	// Chandrakanth Ends
+	
 	@Override
 	public void visit(MethodDeclaration methodDecl, Void arg) {
 		log.writeLog("\tMethod checked: " + methodDecl.getNameAsString()+"\n");
@@ -110,6 +136,11 @@ public class CodeAnalyser extends VoidVisitorAdapter<Void> implements Runnable{
 		}else if(node.getClass().equals(TryStmt.class)) {
 			// Catch clauses are child of try statements then they are treated here
 				TryStmt tryStm = (TryStmt) node;
+				
+				// Chandrakanth
+				processTry(tryStm);
+				// Chandrakanth ends
+				
 				BlockStmt block = tryStm.getTryBlock();
 				for(Statement child: block.getStatements() ) {
 					processTypeExpr(child);
